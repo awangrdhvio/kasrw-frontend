@@ -1,0 +1,242 @@
+# index.html
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kas RW</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      color: #1a73e8;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #1a73e8;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f5f5f5;
+    }
+
+    .pemasukan {
+      color: green;
+      font-weight: bold;
+    }
+
+    .pengeluaran {
+      color: red;
+      font-weight: bold;
+    }
+
+    form {
+      margin-top: 20px;
+      display: grid;
+      gap: 10px;
+      max-width: 400px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    input,
+    select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #155ab6;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Aplikasi Pencatatan Kas RW</h1>
+
+  <h2>Tambah Transaksi</h2>
+
+  <form id="form-transaksi">
+    <input type="date" id="tanggal" required>
+
+    <input
+      type="text"
+      id="keterangan"
+      placeholder="Keterangan"
+      required
+    >
+
+    <select id="jenis">
+      <option value="pemasukan">Pemasukan</option>
+      <option value="pengeluaran">Pengeluaran</option>
+    </select>
+
+    <input
+      type="number"
+      id="jumlah"
+      placeholder="Jumlah (Rp)"
+      required
+    >
+
+    <button type="submit">Simpan</button>
+  </form>
+
+  <h2>Daftar Transaksi</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Keterangan</th>
+        <th>Jenis</th>
+        <th>Jumlah</th>
+      </tr>
+    </thead>
+
+    <tbody id="tabel-transaksi"></tbody>
+  </table>
+
+  <script>
+    // Ganti dengan IP Public EC2 backend Anda
+    const API = "http://54.166.102.226:8000";
+
+    function formatRupiah(nominal) {
+      return "Rp " + Number(nominal).toLocaleString("id-ID");
+    }
+
+    async function loadTransaksi() {
+      try {
+        const response = await fetch(API + "/transaksi");
+        const data = await response.json();
+
+        const tbody = document.getElementById("tabel-transaksi");
+        tbody.innerHTML = "";
+
+        data.forEach(function(t) {
+          tbody.innerHTML += `
+            <tr>
+              <td>${t.tanggal}</td>
+              <td>${t.keterangan}</td>
+              <td class="${t.jenis}">${t.jenis}</td>
+              <td>${formatRupiah(t.jumlah)}</td>
+            </tr>
+          `;
+        });
+
+      } catch (error) {
+        console.error(error);
+        alert("Backend tidak dapat diakses");
+      }
+    }
+
+    document
+      .getElementById("form-transaksi")
+      .addEventListener("submit", async function(e) {
+
+        e.preventDefault();
+
+        const body = {
+          tanggal: document.getElementById("tanggal").value,
+          keterangan: document.getElementById("keterangan").value,
+          jenis: document.getElementById("jenis").value,
+          jumlah: parseFloat(document.getElementById("jumlah").value)
+        };
+
+        try {
+          await fetch(API + "/transaksi", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          });
+
+          e.target.reset();
+          loadTransaksi();
+
+        } catch (error) {
+          console.error(error);
+          alert("Gagal menyimpan transaksi");
+        }
+      });
+
+    loadTransaksi();
+  </script>
+
+</body>
+</html>
+```
+
+## Cara Menjalankan
+
+1. Simpan file dengan nama:
+
+```bash
+index.html
+```
+
+2. Ganti:
+
+```javascript
+const API = "http://PUBLIC_IP_EC2:8000";
+```
+
+menjadi IP Public EC2 backend Anda.
+
+Contoh:
+
+```javascript
+const API = "http://54.12.34.56:8000";
+```
+
+3. Jalankan backend FastAPI:
+
+```bash
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+4. Buka frontend di browser.
